@@ -1,43 +1,79 @@
-.maroon {
-    color: #85144b;
+html {
+    background: #181d20;
 }
 
-.navy {
-    color: #001f3f;
+body {
+    background: #181d20;
+    color: #fefefe;
+    font-size: 13px;
 }
 
-.green {
-    color: #2ecc40;
+.table-header {
+    position: relative;
+    align-items: center;
+    display: flex;
+    justify-content: flex-start;
+    min-height: 48px;
+    height: auto;
+    padding: 0 16px;
 }
 
-.purple {
-    color: #b10dc9;
+.table-header > md-checkbox {
+    width: 24px;
+    margin-left: 3px;
+    margin-right: 29px;
+    margin-top: 16px;
 }
 
-.yellow {
-    color: #d8b100;
+.buffer-right {
+    margin-right: 10px;
 }
 
-.red {
-    color: #ca2126;
+ul.breadcrumb-list {
+    padding-left: 15px;
 }
 
-.orange {
-    color: #ff851b;
+ul.breadcrumb-list li {
+    display: inline;
 }
 
-.olive {
-    color: #3d9940;
+ul.breadcrumb-list li span {
+    padding: 2px 5px;
 }
 
-.fuschia {
-    color: #f012be;
+.crumb {
+    border-radius: 5px;
+    background-color: #2e383b;
 }
 
-.blue {
-    color: #0074d9;
+.crumb.clickable {
+    color: dodgerblue;
+    cursor: pointer;
 }
 
-.container {
-    margin: 20px 5px;
+.crumb.clickable:hover {
+    text-decoration: underline;
+}
+
+md-checkbox .md-icon,
+md-checkbox .md-container {
+    width: 16px;
+    height: 16px;
+}
+
+md-checkbox.md-checked .md-icon::after {
+    width: 5.33333px;
+    height: 10.66667px;
+    left: 3.66667px;
+    top: .11111px;
+}
+
+.fa16 {
+    font-size: 16px;
+}
+
+.collapsible {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="fileviewerApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Viewer</title>
+
+    <link rel="stylesheet" href="font-awesome.min.css">
+    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body ng-controller="fileviewerController" ng-cloak>
+    <div class="md-table">
+        <div class="table-controls">
+            <ul class="breadcrumb-list">
+                <li ng-if="currentPath.length != 0">
+                    <span class="crumb clickable fa fa-home" ng-click="crumbClicked('[root]')"></span>
+                    <span class="fa fa-angle-right"></span>
+                </li>
+                <li ng-if="currentPath.length == 0"><span class="crumb fa fa-home"></span></li>
+                <li ng-repeat="label in currentPath">
+                    <span ng-if="!$last" ng-click="crumbClicked(label)" class="crumb clickable">{{label}}</span>
+                    <span ng-if="!$last" class="fa fa-angle-right"></span>
+                    <span ng-if="$last" class="crumb">{{label}}</span>
+                </li>
+            </ul>
+        </div>
+        <div class="table-header">
+            <md-checkbox ng-checked="allSelected()" ng-click="selectAll()" aria-label="SelectAll"></md-checkbox>
+            <div class="collapsible" flex>Filename</div>
+            <div class="collapsible" flex="15">Size</div>
+            <div class="collapsible" flex>Modified</div>
+        </div>
+        <md-list>
+            <md-divider></md-divider>
+            <md-list-item ng-repeat="entry in listing" ng-click="listClicked($event, entry)">
+                <md-checkbox ng-checked="isSelected(entry)" ng-click="toggle(entry)" aria-label="Select{{entry.id}}"></md-checkbox>
+                <div flex class="collapsible">
+                    <span class="buffer-right fa fa-file-{{entry.type}}-o fa16"
+                          ng-class="{'fa-folder-o': entry.type === 'folder', 'fa-file-o': entry.type === 'file'}"></span>
+                    {{entry.name}}
+                </div>
+                <div class="collapsible" flex="15">{{entry.size | humanSize}}</div>
+                <div class="collapsible" flex>{{entry.modified | date:'medium'}}</div>
+            </md-list-item>
+        </md-list>
+    </div>
+
+<pre>{{listing}}</pre>
+</body>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-aria.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-messages.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angular_material/1.1.1/angular-material.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.min.js"></script>
+<script src="new_download.js"></script>
+
+</html>
