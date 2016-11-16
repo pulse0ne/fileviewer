@@ -13,8 +13,12 @@
 </head>
 <body ng-controller="fileviewerController" ng-cloak>
     <div class="md-table">
+        <div class="header">
+            <h3 class="title">File Manager</h3>
+        </div>
         <div class="table-controls">
             <md-button class="md-primary" ng-disabled="selectedItems.length == 0">Download</md-button>
+            <md-button class="md-warn" ng-disabled="selectedItems.length == 0">Delete</md-button>
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">
                     <span class="crumb clickable fa fa-home" ng-click="crumbClicked('[root]')"></span>
@@ -28,15 +32,14 @@
                 </li>
             </ul>
         </div>
-        
         <div class="table-header">
             <md-checkbox ng-checked="allSelected()" ng-click="selectAll()" aria-label="SelectAll"></md-checkbox>
             <div class="collapsible" flex>Filename</div>
             <div class="collapsible" flex="15">Size</div>
             <div class="collapsible" flex>Modified</div>
         </div>
-        <md-list>
-            <md-divider></md-divider>
+        <md-divider></md-divider>
+        <md-list class="scrollable" flex>
             <md-list-item ng-repeat="entry in listing" ng-click="listClicked($event, entry)">
                 <md-checkbox ng-checked="isSelected(entry)" ng-click="toggle(entry)" aria-label="Select{{entry.id}}"></md-checkbox>
                 <div flex class="collapsible">
