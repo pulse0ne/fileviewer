@@ -1,0 +1,43 @@
+.maroon {
+    color: #85144b;
+}
+
+.navy {
+    color: #001f3f;
+}
+
+.green {
+    color: #2ecc40;
+}
+
+.purple {
+    color: #b10dc9;
+}
+
+.yellow {
+    color: #d8b100;
+}
+
+.red {
+    color: #ca2126;
+}
+
+.orange {
+    color: #ff851b;
+}
+
+.olive {
+    color: #3d9940;
+}
+
+.fuschia {
+    color: #f012be;
+}
+
+.blue {
+    color: #0074d9;
+}
+
+.container {
+    margin: 20px 5px;
+}
