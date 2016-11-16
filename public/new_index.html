@@ -14,6 +14,7 @@
 <body ng-controller="fileviewerController" ng-cloak>
     <div class="md-table">
         <div class="table-controls">
+            <md-button class="md-primary" ng-disabled="selectedItems.length == 0">Download</md-button>
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">
                     <span class="crumb clickable fa fa-home" ng-click="crumbClicked('[root]')"></span>
@@ -27,6 +28,7 @@
                 </li>
             </ul>
         </div>
+        
         <div class="table-header">
             <md-checkbox ng-checked="allSelected()" ng-click="selectAll()" aria-label="SelectAll"></md-checkbox>
             <div class="collapsible" flex>Filename</div>
@@ -47,8 +49,6 @@
             </md-list-item>
         </md-list>
     </div>
-
-<pre>{{listing}}</pre>
 </body>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.min.js"></script>

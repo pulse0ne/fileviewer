@@ -43,18 +43,22 @@ _app.controller('fileviewerController', ['$scope', '$httpService', function ($sc
     $scope.listing = [];
     $scope.selectedItems = [];
 
+    var listingCb = function (data) {
+        $scope.listing = data.listing;
+        if (data.current !== '') {
+            $scope.currentPath = data.current.split('/');
+        } else {
+            $scope.currentPath = [];
+        }
+    };
+
     $scope.listClicked = function (event, item) {
         event.stopPropagation();
         if (item.directory) {
             var path = $scope.currentPath.join('/') + '/' + item.name;
-            http.getListing(path, function (data) {
-                $scope.listing = data.listing;
-                if (data.current !== '') {
-                    $scope.currentPath = data.current.split('/');
-                } else {
-                    $scope.currentPath = [];
-                }
-            });
+            http.getListing(path, listingCb);
+        } else {
+            $scope.toggle(item);
         }
     };
 
@@ -91,24 +95,10 @@ _app.controller('fileviewerController', ['$scope', '$httpService', function ($sc
         var c = $scope.currentPath.slice(0);
         c.splice(c.lastIndexOf(loc) + 1);
         var requestPath = c.join('/'); // relative to root
-        http.getListing(requestPath, function (data) {
-            $scope.listing = data.listing;
-            if (data.current !== '') {
-                $scope.currentPath = data.current.split('/');
-            } else {
-                $scope.currentPath = [];
-            }
-        });
+        http.getListing(requestPath, listingCb);
     };
 
-    http.getListing('/', function (data) {
-        $scope.listing = data.listing;
-        if (data.current !== '') {
-            $scope.currentPath = data.current.split('/');
-        } else {
-            $scope.currentPath = [];
-        }
-    });
+    http.getListing('/', listingCb);
 
 }]);
 

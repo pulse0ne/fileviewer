@@ -77,3 +77,8 @@ md-checkbox.md-checked .md-icon::after {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.table-controls .md-button {
+    text-transform: none;
+    background: #2e383b;
+}
