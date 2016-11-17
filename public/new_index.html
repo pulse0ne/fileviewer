@@ -44,7 +44,7 @@
                 <md-checkbox ng-checked="isSelected(entry)" ng-click="toggle(entry)" aria-label="Select{{entry.id}}"></md-checkbox>
                 <div flex class="collapsible">
                     <span class="buffer-right fa fa-file-{{entry.type}}-o fa16"
-                          ng-class="{'fa-folder-o': entry.type === 'folder', 'fa-file-o': entry.type === 'file'}"></span>
+                          ng-class="{'fa-folder': entry.type === 'folder', 'fa-file-o': entry.type === 'file'}"></span>
                     {{entry.name}}
                 </div>
                 <div class="collapsible" flex="15">{{entry.size | humanSize}}</div>

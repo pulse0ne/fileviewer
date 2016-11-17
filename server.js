@@ -3,18 +3,30 @@
  */
 'use strict';
 
+var argparse = require('argparse');
 var bparser = require('body-parser');
 var express = require('express');
 var fs = require('fs-extra');
 var path = require('path');
 
+var parser = argparse.ArgumentParser();
+parser.addArgument(['-p', '--port'], {
+    action: 'store',
+    dest: 'port',
+    defaultValue: 8080
+});
+parser.addArgument(['-r', '--root'], {
+    required: true,
+    action: 'store',
+    dest: 'root'
+});
+
+var config = parser.parseArgs();
 var app = express();
 
 app.use(bparser.json());
 app.use(bparser.urlencoded({extended: true}));
 app.use(express.static(path.join(__dirname, 'public')));
-
-var root = '/home/tsned/Downloads/';
 
 Object.defineProperty(Array.prototype, 'contains', {
     enumerable: false,
@@ -65,12 +77,15 @@ var getType = function (filename) {
 };
 
 app.get('/listing', function (req, res) {
-    // TODO check req params
     var rpath = req.query.requestPath;
+    if (rpath === undefined) {
+        res.sendStatus(500);
+        return;
+    }
     if (rpath.charAt(0) == '/') {
         rpath = rpath.substring(1);
     }
-    var dir = path.join(root, rpath);
+    var dir = path.join(config.root, rpath);
     fs.readdir(dir, 'utf8', function (err, files) {
         if (err) {
             res.sendStatus(500);
@@ -97,7 +112,7 @@ app.get('/listing', function (req, res) {
     });
 });
 
-app.listen(8080);
+app.listen(config.port);
 
 //var archiver = require('archiver');
 //var bparser = require('body-parser');
