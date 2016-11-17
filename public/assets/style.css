@@ -127,8 +127,9 @@ md-checkbox.md-checked .md-icon::after {
 }
 
 .scrollable {
-    height: 80%;
-    overflow-y: auto;
+    overflow: hidden;
+    position: relative;
+    /*height: 80%;*/
 }
 
 .title {

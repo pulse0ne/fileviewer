@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="assets/font-awesome.min.css">
     <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.13/css/perfect-scrollbar.min.css" />
     <link rel="stylesheet" href="assets/style.css">
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
@@ -17,7 +18,7 @@
             <h3 class="title">File Manager</h3>
         </div>
         <div class="table-controls">
-            <md-button class="md-primary" ng-disabled="selectedItems.length == 0">Download</md-button>
+            <md-button class="md-primary" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">Download</md-button>
             <md-button class="md-warn" ng-disabled="selectedItems.length == 0">Delete</md-button>
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">
@@ -39,7 +40,7 @@
             <div class="collapsible" flex>Modified</div>
         </div>
         <md-divider></md-divider>
-        <md-list class="scrollable" flex>
+        <md-list id="scroll-list" class="scrollable" flex>
             <md-list-item ng-repeat="entry in listing" ng-click="listClicked($event, entry)">
                 <md-checkbox ng-checked="isSelected(entry)" ng-click="toggle(entry)" aria-label="Select{{entry.id}}"></md-checkbox>
                 <div flex class="collapsible">
@@ -59,6 +60,7 @@
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-messages.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angular_material/1.1.1/angular-material.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.6.13/js/perfect-scrollbar.min.js"></script>
 <script src="fileviewer.js"></script>
 
 </html>
