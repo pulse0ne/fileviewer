@@ -26,12 +26,13 @@ You have been warned.
 Licensed under MIT
 
 ## Dependency Credits
+Thanks to the wonderful people behind these projects:
 - [jprichardson](https://github.com/jprichardson) for [node-fs-extra](https://github.com/jprichardson/node-fs-extra)
 - [archiverjs](https://github.com/archiverjs) for [node-archiver](https://github.com/archiverjs/node-archiver)
 - [nodeca](https://github.com/nodeca) for [argparse](https://github.com/nodeca/argparse)
 - [expressjs](https://github.com/expressjs) for [express](https://github.com/expressjs/express) and [body-parser](https://github.com/expressjs/body-parser)
-- The Fontawesome Team for [fontawesome](http://fontawesome.io/)
 - [angular](https://github.com/angular) for [angular.js](https://github.com/angular/angular.js) and [Angular Material](https://github.com/angular/material)
 - [chieffancypants](https://github.com/chieffancypants) for [angular-loading-bar](https://github.com/chieffancypants/angular-loading-bar)
 - [noraesae](https://github.com/noraesae) for [perfect-scrollbar](https://github.com/noraesae/perfect-scrollbar)
+- The Fontawesome Team for [fontawesome](http://fontawesome.io/)
 - [StackOverflow](http://stackoverflow.com/) for answering my stupid questions

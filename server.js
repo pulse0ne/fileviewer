@@ -237,6 +237,7 @@ app.post('/download', function (req, res) {
  * }
  */
 app.post('/delete', function (req, res) {
+    // TODO: handle delete
     res.sendStatus(403);
 });
 

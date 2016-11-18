@@ -19,7 +19,7 @@
         </div>
         <div class="table-controls">
             <md-button class="md-primary" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">Download</md-button>
-            <md-button class="md-warn" ng-disabled="selectedItems.length == 0">Delete</md-button>
+            <md-button class="md-warn" ng-disabled="selectedItems.length == 0" ng-click="deleteClicked()">Delete</md-button>
             <span class="fa fa-cog fa16"></span>
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">

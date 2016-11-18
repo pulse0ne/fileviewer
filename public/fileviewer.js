@@ -11,26 +11,48 @@ _app.config(['$mdThemingProvider', 'cfpLoadingBarProvider', function (themingPro
     loadingBar.includeSpinner = false;
 }]);
 
-_app.service('$httpService', ['$http', function ($http) {
+_app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
     var self = this;
 
+    var showErrorToast = function (msg) {
+        $mdToast.show({
+            hideDelay: 5000,
+            position: 'top right',
+            controller: function ($scope) { $scope.msg = msg },
+            template:
+            '<md-toast class="notification">' +
+            '  <span class="md-toast-text" flex>' +
+            '    <span class="error buffer-right fa fa-times fa16"></span>{{msg}}' +
+            '  </span>' +
+            '</md-toast>'
+        });
+    };
+
     self.getListing = function (path, callback) {
-        self.processingRequest = true;
         $http.get('/listing', { params: { requestPath: path }}).then(function success(response) {
             callback(response.data);
         }, function error() {
-            console.error('Could not retrieve file listing at ', path);
-            // TODO: $mdToast or something
+            showErrorToast('Could not retrieve file listing');
         });
     };
 
     self.downloadFiles = function (files, callback) {
-        self.processingRequest = true;
         $http.post('/download', { files: files }).then(function success(response) {
             callback(response.data.link);
         }, function error() {
-            console.error('Could not download files');
-            // TODO: $mdToast or something
+            showErrorToast('Could not download files');
+        });
+    };
+
+    self.deleteFiles = function (files, callback) {
+        $http.post('/delete', { files: files }).then(function success(response) {
+            callback(response.data);
+        }, function error(response) {
+            if (response.status == 403) {
+                showErrorToast('Deletions are not enabled on the server');
+            } else {
+                showErrorToast('Could not delete files');
+            }
         });
     };
 }]);
@@ -150,7 +172,7 @@ _app.controller('fileviewerController', [
                 },
                 template:
                     '<md-toast class="notification">' +
-                    '  <span class="md-toast-text" flex>Download ready:</span><br>' +
+                    '  <span class="md-toast-text" flex>Download ready:</span>' +
                     '  <a class="md-primary md-button" href="{{link}}" target="_blank" ng-click="close()">Download</a>' +
                     '  <a class="md-button md-warn" href="" ng-click="close()">Cancel</a>' +
                     '</md-toast>'
@@ -207,6 +229,11 @@ _app.controller('fileviewerController', [
         $scope.downloadClicked = function () {
             var files = $scope.selectedItems.map(fileObjectMapper);
             http.downloadFiles(files, showDownloadToast);
+        };
+
+        $scope.deleteClicked = function () {
+            var files = $scope.selectedItems.map(fileObjectMapper);
+            http.deleteFiles(files, listingCb);
         };
 
         $scope.changeSort = function (stype) {

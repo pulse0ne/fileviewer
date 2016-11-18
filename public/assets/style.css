@@ -142,7 +142,8 @@ a.md-button {
     color: rgb(3,169,244);
 }
 
-.md-toast-content a.md-button.md-warn {
+.md-toast-content a.md-button.md-warn,
+.error {
     color: rgb(255,87,34);
 }
 
