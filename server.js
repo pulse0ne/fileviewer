@@ -38,9 +38,9 @@ parser.addArgument(['-d', '--delete'], {
     action: 'storeTrue',
     dest: 'del'
 });
-parser.addArgument(['-s', '--sizeof'], {
+parser.addArgument(['-s', '--showhidden'], {
     action: 'storeTrue',
-    dest: 'sizeof'
+    dest: 'hidden'
 });
 
 var config = parser.parseArgs();
@@ -50,25 +50,25 @@ app.use(bparser.json());
 app.use(bparser.urlencoded({extended: true}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(config.tmp));
-app.use(express.static(config.root));
+app.use(express.static(config.root, { dotfiles: config.hidden ? 'allow' : 'ignore' }));
 
 Object.defineProperty(Array.prototype, 'contains', {
     enumerable: false,
     writable: true,
-    value: function (item) { return this.indexOf(item) != -1; }
+    value: function (item) { return this.indexOf(item) != -1 }
 });
 
 // extensions
-var _archiveExts = ['zip', 'gz', 'tar', 'jar'];
+var _archiveExts = ['zip', 'gz', 'tar', 'jar', 'rar'];
 var _audioExts = ['mp3', 'flac', 'ogg'];
-var _codeExts = ['js', 'htm', 'html', 'py', 'sh', 'c', 'h', 'cpp', 'java', 'css', 'xml', 'json'];
+var _codeExts = ['js', 'ts', 'htm', 'html', 'py', 'sh', 'c', 'h', 'cpp', 'cs', 'java', 'css', 'xml', 'json'];
 var _excelExts = ['xls', 'xlsx'];
 var _imageExts = ['png', 'jpg', 'jpeg', 'tiff', 'gif'];
 var _pdfExts = ['pdf'];
 var _powerpointExts = ['ppt', 'pptx'];
 var _textExts = ['txt', 'csv', 'rtf'];
 var _videoExts = ['mp4', 'mov', 'mkv', 'avi'];
-var _wordExts = ['doc', 'docx'];
+var _wordExts = ['doc', 'docx', 'odt'];
 
 var getType = function (filename) {
     var ext = filename.split('.').pop();
@@ -108,22 +108,12 @@ var filepathMapper = function (file) {
     return file.path || '';
 };
 
-var sizeof = function (dir) {
-    var total = 0;
+var countItems = function (dir) {
     try {
-        var s = fs.lstatSync(dir);
-        if (s.isFile()) {
-            total += s.size;
-        } else if (s.isDirectory()) {
-            var files = fs.readdirSync(dir);
-            files.forEach(function (f) {
-                total += sizeof(path.join(dir, f));
-            });
-        }
+        return fs.readdirSync(dir).length;
     } catch (e) {
         return 0;
     }
-    return total;
 };
 
 var tmpRegistry = [];
@@ -162,10 +152,10 @@ app.get('/listing', function (req, res) {
         } else {
             var listing = [];
             files.forEach(function (f) {
-                if (!f.startsWith('.')) {
+                if (!(!config.hidden && f.startsWith('.'))) { // yeah...sorry for this
                     try {
                         var stats = fs.lstatSync(path.join(dir, f));
-                        var size = stats.isDirectory && config.sizeof ? sizeof(path.join(dir, f)) : stats.size;
+                        var size = stats.isDirectory() ? countItems(path.join(dir, f)) : stats.size;
                         var entry = {
                             id: stats.ino,
                             name: f,
@@ -204,32 +194,38 @@ app.post('/download', function (req, res) {
         var p = files[0].path;
         res.status(200).send({ link: p });
     } else { // bulk or folder: create a zip and send link to that
-        try {
-            var archive = archiver('zip', {store: true});
-            var namehash = hashFilenames(files.map(filepathMapper));
-            // TODO: check for existing file based on hash
-            var filename = path.join(config.tmp, namehash + '.zip');
-            var output = fs.createWriteStream(filename);
-            archive.pipe(output);
-            output.on('close', function () {
-                res.status(200).send({link: namehash + '.zip'});
-            });
-            output.on('error', function (err) {
-                throw err;
-            });
-            files.forEach(function (file) {
-                var name = file.path.charAt(0) == '/' ? file.path.substring(1) : file.path;
-                if (file.directory) {
-                    archive.directory(path.join(config.root, name), '/' + name.split('/').pop());
-                } else {
-                    archive.file(path.join(config.root, name), { name: '/' + name.split('/').pop() });
+        var namehash = hashFilenames(files.map(filepathMapper));
+        var filename = path.join(config.tmp, namehash + '.zip');
+        fs.access(filename, fs.constants.R_OK, function (error) {
+            if (!error) { // file exists already
+                res.status(200).send({ link: namehash + '.zip' });
+            } else {
+                try {
+                    var archive = archiver('zip', {store: true});
+                    var output = fs.createWriteStream(filename);
+                    archive.pipe(output);
+                    output.on('close', function () {
+                        res.status(200).send({link: namehash + '.zip'});
+                    });
+                    output.on('error', function (err) {
+                        console.error(err);
+                        throw err;
+                    });
+                    files.forEach(function (file) {
+                        var name = file.path.charAt(0) == '/' ? file.path.substring(1) : file.path;
+                        if (file.directory) {
+                            archive.directory(path.join(config.root, name), '/' + name.split('/').pop());
+                        } else {
+                            archive.file(path.join(config.root, name), {name: '/' + name.split('/').pop()});
+                        }
+                    });
+                    archive.finalize();
+                } catch (e) {
+                    console.error(e);
+                    res.sendStatus(500);
                 }
-            });
-            archive.finalize();
-        } catch (e) {
-            console.error(e);
-            res.sendStatus(500);
-        }
+            }
+        });
     }
 });
 

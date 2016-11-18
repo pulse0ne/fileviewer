@@ -14,19 +14,9 @@ _app.config(['$mdThemingProvider', 'cfpLoadingBarProvider', function (themingPro
 _app.service('$httpService', ['$http', function ($http) {
     var self = this;
 
-    var filesort = function (a, b) {
-        // when we have the same type, sort on name
-        if ((a.directory && b.directory) || (!a.directory && !b.directory)) {
-            return a.name.toLowerCase() > b.name.toLowerCase();
-        } else {
-            return a.directory ? -1 : 1;
-        }
-    };
-
     self.getListing = function (path, callback) {
         self.processingRequest = true;
         $http.get('/listing', { params: { requestPath: path }}).then(function success(response) {
-            response.data.listing.sort(filesort);
             callback(response.data);
         }, function error() {
             console.error('Could not retrieve file listing at ', path);
@@ -54,13 +44,84 @@ _app.controller('fileviewerController', [
         $scope.currentPath = [];
         $scope.listing = [];
         $scope.selectedItems = [];
+        $scope.currSort = ['lex', 'descend'];
 
         var scrollList = document.getElementById('scroll-list');
         if (Ps) {
             Ps.initialize(scrollList, { wheelSpeed: 2, suppressScrollX: true });
         }
+        var sorting = new (function () {
+            this.lex = new (function () {
+                var _sort = function (a, b, descend) {
+                    // prioritize directories, then sort on name
+                    if (a.directory ^ b.directory) {
+                        return a.directory ? -1 : 1;
+                    } else {
+                        return descend ? a.name.toLowerCase() > b.name.toLowerCase() : a.name.toLowerCase() < b.name.toLowerCase();
+                    }
+                };
+
+                this.descend = function (a, b) { return _sort(a, b, true) };
+                this.ascend = function (a, b) { return _sort(a, b, false) };
+                return this;
+            })();
+
+            this.size = new (function () {
+                var _sort = function (a, b, descend) {
+                    // prioritize directories, then sort on size
+                    if (a.directory ^ b.directory) {
+                        return a.directory ? -1 : 1;
+                    } else {
+                        return descend ? a.size > b.size : a.size < b.size;
+                    }
+                };
+
+                this.descend = function (a, b) { return _sort(a, b, true) };
+                this.ascend = function (a, b) { return _sort(a, b, false) };
+                return this;
+            })();
+
+            this.mod = new (function () {
+                var _sort = function (a, b, descend) {
+                    // prioritize directories, then sort on modified
+                    if (a.directory ^ b.directory) {
+                        return a.directory ? -1 : 1;
+                    } else {
+                        return descend ? a.modified > b.modified : a.modified < b.modified;
+                    }
+                };
+
+                this.descend = function (a, b) { return _sort(a, b, true) };
+                this.ascend = function (a, b) { return _sort(a, b, false) };
+                return this;
+            })();
+
+            this.get = function (sort) {
+                if (!sort || sort.constructor !== 'string') {
+                    return this.lex.descend;
+                }
+                var s = sort.split('.');
+                if (s.length != 2) {
+                    return this.lex.descend;
+                }
+                var first = this[s[0]];
+                if (!first) {
+                    return this.lex.descend;
+                }
+                var second = first[s[1]];
+                if (!second) {
+                    return this.lex.descend;
+                }
+                return second;
+            };
+
+            return this;
+        })();
+
+        var currentSort = sorting.get('lex.descend');
 
         var listingCb = function (data) {
+            data.listing.sort(currentSort);
             $scope.listing = data.listing;
             if (data.current !== '') {
                 $scope.currentPath = data.current.split('/');
@@ -68,7 +129,7 @@ _app.controller('fileviewerController', [
                 $scope.currentPath = [];
             }
             $scope.selectedItems = [];
-            $timeout(function () { Ps.update(scrollList); }, 0);
+            $timeout(function () { Ps.update(scrollList) }, 0);
         };
 
         var fileObjectMapper = function (file) {
@@ -85,15 +146,13 @@ _app.controller('fileviewerController', [
                 position: 'top right',
                 controller: function ($scope) {
                     $scope.link = link;
-                    $scope.close = function () {
-                        $mdToast.hide();
-                    };
+                    $scope.close = $mdToast.hide;
                 },
                 template:
-                    '<md-toast>' +
+                    '<md-toast class="notification">' +
                     '  <span class="md-toast-text" flex>Download ready:</span><br>' +
-                    '  <a class="faux-button" href="{{link}}" target="_blank" ng-click="close()">Download</a>' +
-                    '  <span class="faux-button fa fa-times-circle" ng-click="close()"></span>' +
+                    '  <a class="md-primary md-button" href="{{link}}" target="_blank" ng-click="close()">Download</a>' +
+                    '  <a class="md-button md-warn" href="" ng-click="close()">Cancel</a>' +
                     '</md-toast>'
             });
         };
@@ -147,11 +206,17 @@ _app.controller('fileviewerController', [
 
         $scope.downloadClicked = function () {
             var files = $scope.selectedItems.map(fileObjectMapper);
-            http.downloadFiles(files, function (link) {
-                // TODO: generate link
-                console.log(link);
-                showDownloadToast(link);
-            });
+            http.downloadFiles(files, showDownloadToast);
+        };
+
+        $scope.changeSort = function (stype) {
+            if ($scope.currSort[0] == stype) {
+                $scope.currSort = $scope.currSort[1] == 'descend' ? [stype, 'ascend'] : [stype, 'descend'];
+            } else {
+                $scope.currSort = [stype, 'descend'];
+            }
+            currentSort = sorting.get($scope.currSort.join('.'));
+            $scope.listing.sort(currentSort);
         };
 
         http.getListing('/', listingCb);
@@ -160,7 +225,8 @@ _app.controller('fileviewerController', [
 ]);
 
 _app.filter('humanSize', function () {
-    return function (b) {
+    return function (b, d) {
+        if (d) return (!b || b <= 0) ? '0 items' : (b == 1 ? b + ' item' : b + ' items');
         if (!b || b <= 0) return '0 B';
         var sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
         var i = Math.floor(Math.log(b) / Math.log(1024));

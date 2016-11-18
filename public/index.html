@@ -20,6 +20,7 @@
         <div class="table-controls">
             <md-button class="md-primary" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">Download</md-button>
             <md-button class="md-warn" ng-disabled="selectedItems.length == 0">Delete</md-button>
+            <span class="fa fa-cog fa16"></span>
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">
                     <span class="crumb clickable fa fa-home" ng-click="crumbClicked('[root]')"></span>
@@ -35,9 +36,21 @@
         </div>
         <div class="table-header">
             <md-checkbox ng-checked="allSelected()" ng-click="selectAll()" aria-label="SelectAll"></md-checkbox>
-            <div class="collapsible" flex>Filename</div>
-            <div class="collapsible" flex="15">Size</div>
-            <div class="collapsible" flex>Modified</div>
+            <div class="collapsible sort" flex ng-click="changeSort('lex')">
+                Filename&nbsp;&nbsp;
+                <span ng-if="currSort[0] == 'lex'" class="fa"
+                      ng-class="{'fa-caret-down': currSort[1] == 'descend', 'fa-caret-up': currSort[1] == 'ascend'}"></span>
+            </div>
+            <div class="collapsible sort" flex="20" ng-click="changeSort('size')">
+                Size&nbsp;&nbsp;
+                <span ng-if="currSort[0] == 'size'" class="fa"
+                      ng-class="{'fa-caret-down': currSort[1] == 'descend', 'fa-caret-up': currSort[1] == 'ascend'}"></span>
+            </div>
+            <div hide-xs class="collapsible sort" flex ng-click="changeSort('mod')">
+                Modified&nbsp;&nbsp;
+                <span ng-if="currSort[0] == 'mod'" class="fa"
+                      ng-class="{'fa-caret-down': currSort[1] == 'descend', 'fa-caret-up': currSort[1] == 'ascend'}"></span>
+            </div>
         </div>
         <md-divider></md-divider>
         <md-list id="scroll-list" class="scrollable" flex>
@@ -48,8 +61,8 @@
                           ng-class="{'fa-folder': entry.type === 'folder', 'fa-file-o': entry.type === 'file'}"></span>
                     {{entry.name}}
                 </div>
-                <div class="collapsible" flex="15">{{entry.size | humanSize}}</div>
-                <div class="collapsible" flex>{{entry.modified | date:'medium'}}</div>
+                <div class="collapsible" flex="20">{{entry.size | humanSize:entry.directory}}</div>
+                <div hide-xs class="collapsible" flex>{{entry.modified | date:'medium'}}</div>
             </md-list-item>
         </md-list>
     </div>
