@@ -1,6 +1,8 @@
 # Fileviewer
 Little utility to view/download/delete files.
 
+![fileviewer](https://github.com/pulse0ne/fileviewer/blob/master/fileviewer.png?raw=true)
+
 ### Usage
 ```bash
 node server.js -r /home/user/stuff
