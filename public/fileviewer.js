@@ -70,7 +70,7 @@ _app.controller('fileviewerController', [
 
         var scrollList = document.getElementById('scroll-list');
         if (Ps) {
-            Ps.initialize(scrollList, { wheelSpeed: 2, suppressScrollX: true });
+            //Ps.initialize(scrollList, { wheelSpeed: 2, suppressScrollX: true });
         }
 
         // TODO: fix chrome's fucked up sorting nonsense
