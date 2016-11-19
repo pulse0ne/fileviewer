@@ -69,9 +69,9 @@ _app.controller('fileviewerController', [
         $scope.currSort = ['lex', 'descend'];
 
         var scrollList = document.getElementById('scroll-list');
-        if (Ps) {
+        //if (Ps) {
             //Ps.initialize(scrollList, { wheelSpeed: 2, suppressScrollX: true });
-        }
+        //}
 
         // TODO: fix chrome's fucked up sorting nonsense
         var sorting = new (function () {
