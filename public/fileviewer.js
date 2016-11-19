@@ -67,9 +67,57 @@ _app.controller('fileviewerController', [
         $scope.selectedItems = [];
         $scope.currSort = ['lex', 'descend'];
 
-        // TODO: fix chrome's fucked up sorting nonsense
         var sorting = new (function () {
             var self = this;
+
+            // stable merge sort to compensate for chrome
+            self.sort = function (arr, compareFn) {
+                if (arr == null) {
+                    return [];
+                } else if (arr.length < 2) {
+                    return arr;
+                }
+
+                if (compareFn == null) {
+                    compareFn = defaultCompare;
+                }
+
+                var mid, left, right;
+
+                mid   = ~~(arr.length / 2);
+                left  = self.sort( arr.slice(0, mid), compareFn );
+                right = self.sort( arr.slice(mid, arr.length), compareFn );
+
+                return merge(left, right, compareFn);
+            };
+
+            var defaultCompare = function (a, b) {
+                return a < b ? -1 : (a > b? 1 : 0);
+            };
+
+            var merge = function (left, right, compareFn) {
+                var result = [];
+
+                while (left.length && right.length) {
+                    if (compareFn(left[0], right[0]) <= 0) {
+                        // if 0 it should preserve same order (stable)
+                        result.push(left.shift());
+                    } else {
+                        result.push(right.shift());
+                    }
+                }
+
+                if (left.length) {
+                    result.push.apply(result, left);
+                }
+
+                if (right.length) {
+                    result.push.apply(result, right);
+                }
+
+                return result;
+            };
+
             self.lex = new (function () {
                 var _sort = function (a, b, descend) {
                     // prioritize directories, then sort on name
@@ -140,8 +188,7 @@ _app.controller('fileviewerController', [
         var currentSort = sorting.get('lex.descend');
 
         var listingCb = function (data) {
-            data.listing.sort(currentSort);
-            $scope.listing = data.listing;
+            $scope.listing = sorting.sort(data.listing, currentSort);
             if (data.current !== '') {
                 $scope.currentPath = data.current.split('/');
             } else {
@@ -244,7 +291,7 @@ _app.controller('fileviewerController', [
                 $scope.currSort = [stype, 'descend'];
             }
             currentSort = sorting.get($scope.currSort.join('.'));
-            $scope.listing.sort(currentSort);
+            $scope.listing = sorting.sort($scope.listing, currentSort);
         };
 
         http.getListing('/', listingCb);
