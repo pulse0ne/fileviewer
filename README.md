@@ -35,6 +35,5 @@ Thanks to the wonderful people behind these projects:
 - [expressjs](https://github.com/expressjs) for [express](https://github.com/expressjs/express) and [body-parser](https://github.com/expressjs/body-parser)
 - [angular](https://github.com/angular) for [angular.js](https://github.com/angular/angular.js) and [Angular Material](https://github.com/angular/material)
 - [chieffancypants](https://github.com/chieffancypants) for [angular-loading-bar](https://github.com/chieffancypants/angular-loading-bar)
-- [noraesae](https://github.com/noraesae) for [perfect-scrollbar](https://github.com/noraesae/perfect-scrollbar)
 - The Fontawesome Team for [fontawesome](http://fontawesome.io/)
 - [StackOverflow](http://stackoverflow.com/) for answering my stupid questions

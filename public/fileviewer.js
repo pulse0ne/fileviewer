@@ -59,19 +59,13 @@ _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
 
 _app.controller('fileviewerController', [
     '$scope',
-    '$timeout',
     '$mdToast',
     '$httpService',
-    function ($scope, $timeout, $mdToast, http) {
+    function ($scope, $mdToast, http) {
         $scope.currentPath = [];
         $scope.listing = [];
         $scope.selectedItems = [];
         $scope.currSort = ['lex', 'descend'];
-
-        var scrollList = document.getElementById('scroll-list');
-        //if (Ps) {
-            //Ps.initialize(scrollList, { wheelSpeed: 2, suppressScrollX: true });
-        //}
 
         // TODO: fix chrome's fucked up sorting nonsense
         var sorting = new (function () {
@@ -154,7 +148,6 @@ _app.controller('fileviewerController', [
                 $scope.currentPath = [];
             }
             $scope.selectedItems = [];
-            //$timeout(function () { Ps.update(scrollList) }, 0);
         };
 
         var fileObjectMapper = function (file) {
