@@ -235,7 +235,7 @@ app.post('/download', function (req, res) {
     } else { // bulk or folder: create a zip and send link to that
         var namehash = hashFilenames(files.map(filepathMapper));
         var filename = path.join(config.tmp, namehash + '.zip');
-        fs.access(filename, fs.constants.R_OK, function (error) {
+        fs.access(filename, fs.R_OK, function (error) {
             if (!error) { // file exists already
                 res.status(200).send({ link: namehash + '.zip' });
             } else {
