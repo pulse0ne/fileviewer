@@ -44,8 +44,8 @@ _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
         });
     };
 
-    self.deleteFiles = function (files, callback) {
-        $http.post('/delete', { files: files }).then(function success(response) {
+    self.deleteFiles = function (files, current, callback) {
+        $http.post('/delete', { files: files, current: current }).then(function success(response) {
             callback(response.data);
         }, function error(response) {
             if (response.status == 403) {
@@ -72,8 +72,11 @@ _app.controller('fileviewerController', [
         if (Ps) {
             Ps.initialize(scrollList, { wheelSpeed: 2, suppressScrollX: true });
         }
+
+        // TODO: fix chrome's fucked up sorting nonsense
         var sorting = new (function () {
-            this.lex = new (function () {
+            var self = this;
+            self.lex = new (function () {
                 var _sort = function (a, b, descend) {
                     // prioritize directories, then sort on name
                     if (a.directory ^ b.directory) {
@@ -88,7 +91,7 @@ _app.controller('fileviewerController', [
                 return this;
             })();
 
-            this.size = new (function () {
+            self.size = new (function () {
                 var _sort = function (a, b, descend) {
                     // prioritize directories, then sort on size
                     if (a.directory ^ b.directory) {
@@ -103,7 +106,7 @@ _app.controller('fileviewerController', [
                 return this;
             })();
 
-            this.mod = new (function () {
+            self.mod = new (function () {
                 var _sort = function (a, b, descend) {
                     // prioritize directories, then sort on modified
                     if (a.directory ^ b.directory) {
@@ -118,26 +121,26 @@ _app.controller('fileviewerController', [
                 return this;
             })();
 
-            this.get = function (sort) {
-                if (!sort || sort.constructor !== 'string') {
-                    return this.lex.descend;
+            self.get = function (sort) {
+                if (!sort || sort.constructor !== String) {
+                    return self.lex.descend;
                 }
                 var s = sort.split('.');
                 if (s.length != 2) {
-                    return this.lex.descend;
+                    return self.lex.descend;
                 }
                 var first = this[s[0]];
                 if (!first) {
-                    return this.lex.descend;
+                    return self.lex.descend;
                 }
                 var second = first[s[1]];
                 if (!second) {
-                    return this.lex.descend;
+                    return self.lex.descend;
                 }
                 return second;
             };
 
-            return this;
+            return self;
         })();
 
         var currentSort = sorting.get('lex.descend');
@@ -160,6 +163,10 @@ _app.controller('fileviewerController', [
                 path: path,
                 directory: file.directory
             };
+        };
+
+        var filePathMapper = function (file) {
+            return $scope.currentPath.join('/') + '/' + file.name;
         };
 
         var showDownloadToast = function (link) {
@@ -232,8 +239,9 @@ _app.controller('fileviewerController', [
         };
 
         $scope.deleteClicked = function () {
-            var files = $scope.selectedItems.map(fileObjectMapper);
-            http.deleteFiles(files, listingCb);
+            var files = $scope.selectedItems.map(filePathMapper);
+            var current = $scope.currentPath.join('/');
+            http.deleteFiles(files, current, listingCb);
         };
 
         $scope.changeSort = function (stype) {

@@ -116,30 +116,9 @@ var countItems = function (dir) {
     }
 };
 
-var tmpRegistry = [];
-
-setTimeout(function () {
-    var now = Date.now();
-    tmpRegistry.forEach(function (entry, ix, arr) {
-        if (entry.expires > now) {
-            // delete
-            fs.remove(entry.file, function (err) {
-                if (err) console.error('Could not remove the file: ', err);
-                arr.splice(ix, 1); // remove from registry
-            });
-        }
-    });
-}, 1000 * 60 * 2);
-
-/**
- * {
- *   requestPath: '/path/to/folder'
- * }
- */
-app.get('/listing', function (req, res) {
-    var rpath = req.query.requestPath;
+var getListing = function (rpath, res) {
     if (rpath === undefined) {
-        res.sendStatus(500);
+        res.sendStatus(400);
         return;
     }
     if (rpath.charAt(0) == '/') {
@@ -173,6 +152,66 @@ app.get('/listing', function (req, res) {
             res.status(200).send({ listing: listing, current: rpath });
         }
     });
+};
+
+var tmpRegistry = [];
+
+setTimeout(function () {
+    var now = Date.now();
+    tmpRegistry.forEach(function (entry, ix, arr) {
+        if (entry.expires > now) {
+            // delete
+            fs.remove(entry.file, function (err) {
+                if (err) console.error('Could not remove the file: ', err);
+                arr.splice(ix, 1); // remove from registry
+            });
+        }
+    });
+}, 1000 * 60 * 2);
+
+/**
+ * {
+ *   requestPath: '/path/to/folder'
+ * }
+ */
+app.get('/listing', function (req, res) {
+    var rpath = req.query.requestPath;
+    //if (rpath === undefined) {
+    //    res.sendStatus(400);
+    //    return;
+    //}
+    //if (rpath.charAt(0) == '/') {
+    //    rpath = rpath.substring(1);
+    //}
+    //var dir = path.join(config.root, rpath);
+    //fs.readdir(dir, 'utf8', function (err, files) {
+    //    if (err) {
+    //        res.sendStatus(400);
+    //    } else {
+    //        var listing = [];
+    //        files.forEach(function (f) {
+    //            if (!(!config.hidden && f.startsWith('.'))) { // yeah...sorry for this
+    //                try {
+    //                    var stats = fs.lstatSync(path.join(dir, f));
+    //                    var size = stats.isDirectory() ? countItems(path.join(dir, f)) : stats.size;
+    //                    var entry = {
+    //                        id: stats.ino,
+    //                        name: f,
+    //                        size: size,
+    //                        modified: stats.mtime.getTime(),
+    //                        directory: stats.isDirectory(),
+    //                        type: stats.isDirectory() ? 'folder' : getType(f)
+    //                    };
+    //                    listing.push(entry);
+    //                } catch (e) {
+    //                    console.error('Could not stat file:', e);
+    //                }
+    //            }
+    //        });
+    //        res.status(200).send({ listing: listing, current: rpath });
+    //    }
+    //});
+    getListing(rpath, res);
 });
 
 /**
@@ -233,12 +272,31 @@ app.post('/download', function (req, res) {
  * Note: only active when delete is enabled
  *
  * {
+ *   current: 'path',
  *   files: ['path1', 'path2', ...]
  * }
  */
 app.post('/delete', function (req, res) {
-    // TODO: handle delete
-    res.sendStatus(403);
+    if (!config.del) {
+        res.sendStatus(403);
+        return;
+    }
+
+    var files = req.body.files;
+    if (files.constructor !== Array || files.length == 0) {
+        res.sendStatus(400);
+    } else {
+        files.forEach(function (file) {
+            var filename = path.join(config.root, file);
+            try {
+                fs.removeSync(filename);
+            } catch (e) {
+                console.error(e);
+            }
+        });
+        var curr = req.body.current;
+        getListing(curr, res);
+    }
 });
 
 try {
