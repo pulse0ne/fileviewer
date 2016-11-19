@@ -128,9 +128,8 @@ a.md-button {
 }
 
 .scrollable {
-    overflow: hidden;
-    position: relative;
-    /*height: 80%;*/
+    height: 80%;
+    overflow-y: scroll;
 }
 
 .title {
