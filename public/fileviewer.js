@@ -154,7 +154,7 @@ _app.controller('fileviewerController', [
                 $scope.currentPath = [];
             }
             $scope.selectedItems = [];
-            $timeout(function () { Ps.update(scrollList) }, 0);
+            //$timeout(function () { Ps.update(scrollList) }, 0);
         };
 
         var fileObjectMapper = function (file) {
