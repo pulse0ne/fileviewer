@@ -1,6 +1,6 @@
 'use strict';
 
-var _app = angular.module('fileviewerApp', ['ngMaterial', 'ngTouch', 'angular-loading-bar']);
+var _app = angular.module('fileviewerApp', ['ngMaterial', 'angular-loading-bar']);
 
 _app.config(['$mdThemingProvider', 'cfpLoadingBarProvider', function (themingProvider, loadingBar) {
     themingProvider.theme('default')
