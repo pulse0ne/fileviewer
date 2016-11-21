@@ -17,9 +17,21 @@
             <h3 class="title">File Manager</h3>
         </div>
         <div class="table-controls">
-            <md-button class="md-primary" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">Download</md-button>
-            <md-button class="md-warn" ng-disabled="selectedItems.length == 0" ng-click="deleteClicked()">Delete</md-button>
-            <span class="fa fa-cog fa16"></span>
+            <md-button class="md-primary" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">
+                <span class="fa fa-download icon-button"></span><span class="buffer-left" hide-xs>Download</span>
+            </md-button>
+            <md-button class="md-warn" ng-disabled="selectedItems.length == 0" ng-click="deleteClicked()">
+                <span class="fa fa-trash icon-button"></span><span class="buffer-left" hide-xs>Delete</span>
+            </md-button>
+            <md-button class="md-primary">
+                <span class="fa fa-cog icon-button settings"></span><span class="buffer-left" hide-xs>Settings</span>
+            </md-button>
+            <md-button class="md-primary">
+                <span class="fa fa-cloud-upload icon-button"></span><span class="buffer-left" hide-xs>Upload</span>
+            </md-button>
+            <md-button class="md-primary">
+                <span class="fa fa-font icon-button"></span><span class="buffer-left" hide-xs>Rename</span>
+            </md-button>
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">
                     <span class="crumb clickable fa fa-home" ng-click="crumbClicked('[root]')"></span>

@@ -19,6 +19,15 @@ node server.js -r /home/user/stuff
 -s --showhidden (optional) when present, shows hidden files (can be re-hidden on client-side)
 ```
 
+### TODOs
+- Add local settings menu
+- Confirmation dialog for delete
+- Hide icon buttons when disabled?
+- Add upload capability
+- Add title attribute for buttons
+- Add rename capability
+- Add move capability?
+
 ### Notes
 - Lots of sensitive information will be passed over the line (file structure and information, files can be downloaded, etc.), so if used anywhere other than a LAN or closed environment, make sure you're serving everything over TLS (https).
 This is especially important for the downloads: the links are created dynamically from information passed from the server. If there is a man-in-the-middle on the connection, they could dynamically change the download location to something malicious.

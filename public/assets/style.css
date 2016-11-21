@@ -36,6 +36,10 @@ html, body {
     margin-right: 10px;
 }
 
+.buffer-left {
+    margin-left: 10px;
+}
+
 ul.breadcrumb-list {
     padding-left: 16px;
     margin-top: 10px;
@@ -113,10 +117,19 @@ a.md-button {
     background-color: #2e383b;
     margin-top: 0;
     margin-bottom: 0;
+    min-width: 48px;
 }
 
 .table-controls .md-button[disabled] {
     background-color: #1e272a;
+}
+
+.icon-button {
+    margin: 4px 0;
+}
+
+.settings {
+    color: white;
 }
 
 .md-table {
@@ -151,8 +164,11 @@ a.md-button {
     border: 1px solid rgba(255,255,255,0.12);
 }
 
-.notification * {
+.notification *,
+.table-controls .md-button {
     font-size: 12px;
+    line-height: 24px;
+    min-height: 24px;
 }
 
 .sort {
