@@ -55,17 +55,37 @@ _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
             }
         });
     };
+
+    self.rename = function (obj, callback) {
+        $http.post('/rename', obj).then(function success(response) {
+            callback(response.data);
+        }, function error(response) {
+            // TODO: improve
+            showErrorToast('Error: ' + response.status);
+        });
+    };
+
+    self.newfolder = function (obj, callback) {
+        $http.post('/newfolder', obj).then(function success(response) {
+            callback(response.data);
+        }, function error(response) {
+            // TODO: improve
+            showErrorToast('Error: ' + response.status);
+        });
+    };
 }]);
 
 _app.controller('fileviewerController', [
     '$scope',
     '$mdToast',
+    '$mdDialog',
     '$httpService',
-    function ($scope, $mdToast, http) {
+    function ($scope, $mdToast, $mdDialog, http) {
         $scope.currentPath = [];
         $scope.listing = [];
         $scope.selectedItems = [];
         $scope.currSort = ['lex', 'descend'];
+        $scope.flags = {};
 
         var sorting = new (function () {
             var self = this;
@@ -194,6 +214,7 @@ _app.controller('fileviewerController', [
             } else {
                 $scope.currentPath = [];
             }
+            $scope.flags = data.flags || {};
             $scope.selectedItems = [];
         };
 
@@ -213,7 +234,7 @@ _app.controller('fileviewerController', [
             $mdToast.show({
                 hideDelay: false,
                 position: 'top right',
-                controller: function ($scope) {
+                controller: function ($scope, $mdToast) {
                     $scope.link = link;
                     $scope.close = $mdToast.hide;
                 },
@@ -223,6 +244,33 @@ _app.controller('fileviewerController', [
                     '  <a class="md-primary md-button" href="{{link}}" target="_blank" ng-click="close()">Download</a>' +
                     '  <a class="md-button md-warn" href="" ng-click="close()">Cancel</a>' +
                     '</md-toast>'
+            });
+        };
+
+        var showDeleteConfirmationDialog = function (msg, okcb) {
+            var confirm = $mdDialog.confirm().textContent(msg).ok('Delete').cancel('Cancel');
+            $mdDialog.show(confirm).then(function confirm() {
+                okcb();
+            });
+        };
+
+        var showRenameDialog = function (item, currentPath, cb) {
+            var f = item;
+            var basepath = currentPath.endsWith('/') ? currentPath : currentPath + '/';
+            var rename = $mdDialog.prompt().textContent('Rename ' + f.name + ':').ok('Rename').cancel('Cancel');
+            $mdDialog.show(rename).then(function confirm(result) {
+                var current = basepath + f.name;
+                var newp = basepath + result || basepath + f.name;
+                http.rename({ currentPath: current, newPath: newp, directory: f.directory }, cb);
+            });
+        };
+
+        var showNewFolderDialog = function (currentPath, cb) {
+            var basepath = currentPath.endsWith('/') ? currentPath : currentPath + '/';
+            var newfolder = $mdDialog.prompt().textContent('Name new folder:').ok('Create').cancel('Cancel');
+            $mdDialog.show(newfolder).then(function confirm(result) {
+                var newf = result || 'New Folder';
+                http.newfolder({ current: basepath, folderName: newf }, cb);
             });
         };
 
@@ -281,7 +329,22 @@ _app.controller('fileviewerController', [
         $scope.deleteClicked = function () {
             var files = $scope.selectedItems.map(filePathMapper);
             var current = $scope.currentPath.join('/');
-            http.deleteFiles(files, current, listingCb);
+            var n = files.length;
+            showDeleteConfirmationDialog('Are you sure you want to delete ' + n + ' item' + (n > 1) ? 's?' : '?', function () {
+                http.deleteFiles(files, current, listingCb);
+            });
+        };
+
+        $scope.renameClicked = function () {
+            showRenameDialog($scope.selectedItems[0], $scope.currentPath.join('/'), listingCb);
+        };
+
+        $scope.newFolderClicked = function () {
+            showNewFolderDialog($scope.currentPath.join('/'), listingCb);
+        };
+
+        $scope.uploadClicked = function () {
+            // TODO
         };
 
         $scope.changeSort = function (stype) {

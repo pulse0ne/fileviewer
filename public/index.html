@@ -17,21 +17,33 @@
             <h3 class="title">File Manager</h3>
         </div>
         <div class="table-controls">
-            <md-button class="md-primary" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">
-                <span class="fa fa-download icon-button"></span><span class="buffer-left" hide-xs>Download</span>
-            </md-button>
-            <md-button class="md-warn" ng-disabled="selectedItems.length == 0" ng-click="deleteClicked()">
-                <span class="fa fa-trash icon-button"></span><span class="buffer-left" hide-xs>Delete</span>
-            </md-button>
-            <md-button class="md-primary">
-                <span class="fa fa-cog icon-button settings"></span><span class="buffer-left" hide-xs>Settings</span>
-            </md-button>
-            <md-button class="md-primary">
-                <span class="fa fa-cloud-upload icon-button"></span><span class="buffer-left" hide-xs>Upload</span>
-            </md-button>
-            <md-button class="md-primary">
-                <span class="fa fa-font icon-button"></span><span class="buffer-left" hide-xs>Rename</span>
-            </md-button>
+            <div class="controls-container" flex>
+                <md-button class="md-primary buffer-left" title="Download" ng-disabled="selectedItems.length == 0" ng-click="downloadClicked()">
+                    <span class="fa fa-download icon-button download"></span>
+                    <span class="buffer-left-sm download" hide-xs>Download</span>
+                </md-button>
+                <md-button class="md-warn" title="Delete" ng-if="flags.del" ng-disabled="selectedItems.length == 0" ng-click="deleteClicked()">
+                    <span class="fa fa-trash icon-button delete"></span>
+                    <span class="buffer-left-sm delete" hide-xs>Delete</span>
+                </md-button>
+                <md-button class="md-primary" title="Rename" ng-if="flags.rnm" ng-disabled="selectedItems.length != 1" ng-click="renameClicked()">
+                    <span class="fa fa-i-cursor icon-button rename"></span>
+                    <span class="buffer-left-sm rename" hide-xs>Rename</span>
+                </md-button>
+            </div>
+            <div class="controls-container">
+                <md-button class="md-primary buffer-right" title="New Folder" ng-if="flags.nwf" ng-click="newFolderClicked()">
+                    <span class="fa fa-plus icon-button new-folder"></span>
+                    <span class="buffer-left-sm new-folder" hide-xs>New Folder</span>
+                </md-button>
+                <md-button class="md-primary buffer-right" title="Upload" ng-if="flags.upl" ng-click="uploadClicked()">
+                    <span class="fa fa-upload icon-button upload"></span>
+                    <span class="buffer-left-sm upload" hide-xs>Upload</span>
+                </md-button>
+
+            </div>
+        </div>
+        <div class="breadcrumb-container">
             <ul class="breadcrumb-list">
                 <li ng-if="currentPath.length != 0">
                     <span class="crumb clickable fa fa-home" ng-click="crumbClicked('[root]')"></span>

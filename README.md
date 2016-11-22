@@ -3,9 +3,20 @@ Little utility to view/download/delete files.
 
 ![fileviewer](https://github.com/pulse0ne/fileviewer/blob/master/fileviewer.png?raw=true)
 
-### Usage
+### Basic Usage
 ```bash
 node server.js -r /home/user/stuff
+```
+
+### Advanced Usage
+#### All options (long-form)
+```bash
+node server.js --root /home/user/stuff --port 1776 --expiry 120 --tmp ./abc --delete --upload --newfolder --rename --showhidden
+```
+
+#### All options (short-form)
+```bash
+node server.js -r /home/user/stuff -p 1776 -e 120 -t ./abc -d -u -n -m -s
 ```
 
 ### Arguments
@@ -15,16 +26,17 @@ node server.js -r /home/user/stuff
 -p --port       (optional; default: 8080) the port to start the server on
 -e --expiry     (optional; default: 60) the time in minutes a temporary file will live for
 -t --tmp        (optional; default: ./tmp) the temporary folder for zipped files
+
 -d --delete     (optional) when present, delete capability will be enabled
--s --showhidden (optional) when present, shows hidden files (can be re-hidden on client-side)
+-u --upload     (optional) when present, upload capability will be enabled
+-n --newfolder  (optional) when present, new folder capability will be enabled
+-m --rename     (optional) when present, rename capability will be enabled
+-s --showhidden (optional) when present, shows hidden files
 ```
 
 ### TODOs
-- Add local settings menu
-- Confirmation dialog for delete
 - Hide icon buttons when disabled?
 - Add upload capability
-- Add title attribute for buttons
 - Add rename capability
 - Add move capability?
 
