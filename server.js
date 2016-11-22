@@ -42,6 +42,18 @@ parser.addArgument(['-s', '--showhidden'], {
     action: 'storeTrue',
     dest: 'hidden'
 });
+parser.addArgument(['-u', '--upload'], {
+    action: 'storeTrue',
+    dest: 'upload'
+});
+parser.addArgument(['-n', '--newfolder'], {
+    action: 'storeTrue',
+    dest: 'newfolder'
+});
+parser.addArgument(['-m', '--rename'], {
+    action: 'storeTrue',
+    dest: 'rename'
+});
 
 var config = parser.parseArgs();
 var app = express();
@@ -98,6 +110,13 @@ var getType = function (filename) {
     }
 };
 
+var flags = {
+    del: config.del,
+    upl: config.upload,
+    nwf: config.newfolder,
+    rnm: config.rename
+};
+
 var hashFilenames = function (files) {
     var copy = files.slice(0);
     copy.sort();
@@ -116,14 +135,19 @@ var countItems = function (dir) {
     }
 };
 
+var normalizeRelPath = function (p) {
+    if (p.charAt(0) == '/') {
+        p = p.substring(1);
+    }
+    return p;
+};
+
 var getListing = function (rpath, res) {
-    if (rpath === undefined) {
+    if (!rpath) {
         res.sendStatus(400);
         return;
     }
-    if (rpath.charAt(0) == '/') {
-        rpath = rpath.substring(1);
-    }
+    rpath = normalizeRelPath(rpath);
     var dir = path.join(config.root, rpath);
     fs.readdir(dir, 'utf8', function (err, files) {
         if (err) {
@@ -149,9 +173,21 @@ var getListing = function (rpath, res) {
                     }
                 }
             });
-            res.status(200).send({ listing: listing, current: rpath });
+            res.status(200).send({ listing: listing, current: rpath, flags: flags });
         }
     });
+};
+
+var doMove = function (oldPath, newPath, isDir, res) {
+    if (!oldPath || !newPath) {
+        res.sendStatus(400);
+        return;
+    }
+    oldPath = normalizeRelPath(oldPath);
+    newPath = normalizeRelPath(newPath);
+
+    // TODO
+    res.sendStatus(400);
 };
 
 var tmpRegistry = [];
@@ -176,41 +212,6 @@ setTimeout(function () {
  */
 app.get('/listing', function (req, res) {
     var rpath = req.query.requestPath;
-    //if (rpath === undefined) {
-    //    res.sendStatus(400);
-    //    return;
-    //}
-    //if (rpath.charAt(0) == '/') {
-    //    rpath = rpath.substring(1);
-    //}
-    //var dir = path.join(config.root, rpath);
-    //fs.readdir(dir, 'utf8', function (err, files) {
-    //    if (err) {
-    //        res.sendStatus(400);
-    //    } else {
-    //        var listing = [];
-    //        files.forEach(function (f) {
-    //            if (!(!config.hidden && f.startsWith('.'))) { // yeah...sorry for this
-    //                try {
-    //                    var stats = fs.lstatSync(path.join(dir, f));
-    //                    var size = stats.isDirectory() ? countItems(path.join(dir, f)) : stats.size;
-    //                    var entry = {
-    //                        id: stats.ino,
-    //                        name: f,
-    //                        size: size,
-    //                        modified: stats.mtime.getTime(),
-    //                        directory: stats.isDirectory(),
-    //                        type: stats.isDirectory() ? 'folder' : getType(f)
-    //                    };
-    //                    listing.push(entry);
-    //                } catch (e) {
-    //                    console.error('Could not stat file:', e);
-    //                }
-    //            }
-    //        });
-    //        res.status(200).send({ listing: listing, current: rpath });
-    //    }
-    //});
     getListing(rpath, res);
 });
 
@@ -273,7 +274,7 @@ app.post('/download', function (req, res) {
  *
  * {
  *   current: 'path',
- *   files: ['path1', 'path2', ...]
+ *   files: ['file1', 'file2', ...]
  * }
  */
 app.post('/delete', function (req, res) {
@@ -297,6 +298,51 @@ app.post('/delete', function (req, res) {
         var curr = req.body.current;
         getListing(curr, res);
     }
+});
+
+/**
+ * {
+ *   currentPath: 'path',
+ *   newPath: 'path',
+ *   directory: bool
+ * }
+ */
+app.post('/rename', function (req, res) {
+    doMove(req.body.currentPath, req.body.newPath, req.body.directory, res);
+});
+
+/**
+ * {
+ *   current: 'path',
+ *   folderName: 'name'
+ * }
+ */
+app.post('/newfolder', function (req, res) {
+    if (!config.newfolder) {
+        res.sendStatus(403);
+        return;
+    }
+    var c = req.body.current;
+    var f = req.body.folderName;
+    if (!c || !f) {
+        res.sendStatus(400);
+        return;
+    }
+
+    var p = path.join(config.root, normalizeRelPath(c), f.replace('/', ''));
+    fs.access(p, fs.R_OK, function (err) {
+        if (err) { // folder doesn't exist yet
+            fs.mkdir(p, function (err) {
+                if (err) {
+                    res.sendStatus(500);
+                } else {
+                    getListing(c, res);
+                }
+            });
+        } else {
+            res.sendStatus(400);
+        }
+    });
 });
 
 try {

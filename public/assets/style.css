@@ -5,7 +5,7 @@ html {
 body {
     background: #181d20;
     color: #fefefe;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 html, body {
@@ -33,11 +33,19 @@ html, body {
 }
 
 .buffer-right {
-    margin-right: 10px;
+    margin-right: 16px !important;
 }
 
 .buffer-left {
-    margin-left: 10px;
+    margin-left: 16px !important;
+}
+
+.buffer-right-sm {
+    margin-right: 8px !important;
+}
+
+.buffer-left-sm {
+    margin-left: 8px !important;
 }
 
 ul.breadcrumb-list {
@@ -111,25 +119,34 @@ md-checkbox.md-checked .md-icon::after {
     text-overflow: ellipsis;
 }
 
-.table-controls .md-button,
+.table-controls {
+    display: flex;
+    flex-direction: row;
+}
+
+.table-controls .controls-container .md-button,
 a.md-button {
     text-transform: none;
     background-color: #2e383b;
-    margin-top: 0;
-    margin-bottom: 0;
+    margin: 0 5px;
     min-width: 48px;
 }
 
-.table-controls .md-button[disabled] {
+.table-controls .controls-container .md-button[disabled] {
     background-color: #1e272a;
+    color: rgba(255,255,255,0.12);
+}
+
+.table-controls .controls-container .md-button[disabled] * {
+    color: rgba(255,255,255,0.30);
+}
+
+.controls-container {
+    display: inline-flex;
 }
 
 .icon-button {
     margin: 4px 0;
-}
-
-.settings {
-    color: white;
 }
 
 .md-table {
@@ -150,16 +167,33 @@ a.md-button {
     margin: 8px 0;
 }
 
-.md-toast-content a.md-button.md-primary {
+.new-folder {
+    color: #ff8ae7;
+}
+
+.rename {
+    color: #a687ff;
+}
+
+.upload {
+    color: #8fc23b;
+}
+
+.md-toast-content a.md-button.md-primary,
+.download,
+md-dialog md-dialog-actions .md-button.md-primary.md-cancel-button {
     color: rgb(3,169,244);
 }
 
 .md-toast-content a.md-button.md-warn,
-.error {
-    color: rgb(255,87,34);
+.error,
+.delete,
+md-dialog md-dialog-actions .md-button.md-primary.md-confirm-button {
+    color: rgb(255, 82, 35);
 }
 
-.notification .md-toast-content {
+.notification .md-toast-content,
+md-dialog, md-dialog.md-default-theme {
     background-color: #181d20;
     border: 1px solid rgba(255,255,255,0.12);
 }
@@ -185,3 +219,12 @@ a.md-button {
 .sort, .sort:hover, .sort:focus, .sort:active {
     outline: none;
 }
+
+md-backdrop.md-opaque {
+    opacity: 0.75;
+}
+
+md-dialog-actions .md-button {
+    text-transform: none;
+}
+
