@@ -137,7 +137,9 @@ a.md-button {
     color: rgba(255,255,255,0.12);
 }
 
-.table-controls .controls-container .md-button[disabled] * {
+.table-controls .controls-container .md-button[disabled] *,
+md-dialog md-dialog-actions .md-button.md-primary.md-cancel-button[disabled],
+md-dialog md-dialog-actions .md-button.md-primary.md-confirm-button[disabled] {
     color: rgba(255,255,255,0.30);
 }
 

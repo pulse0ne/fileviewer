@@ -9,6 +9,7 @@ var bparser = require('body-parser');
 var crypto = require('crypto');
 var express = require('express');
 var fs = require('fs-extra');
+var multer = require('multer');
 var path = require('path');
 
 var parser = argparse.ArgumentParser();
@@ -70,6 +71,9 @@ Object.defineProperty(Array.prototype, 'contains', {
     value: function (item) { return this.indexOf(item) != -1 }
 });
 
+var storage = multer.memoryStorage();
+var upload = multer({ storage: storage });
+
 // extensions
 var _archiveExts = ['zip', 'gz', 'tar', 'jar', 'rar'];
 var _audioExts = ['mp3', 'flac', 'ogg'];
@@ -82,6 +86,7 @@ var _textExts = ['txt', 'csv', 'rtf'];
 var _videoExts = ['mp4', 'mov', 'mkv', 'avi'];
 var _wordExts = ['doc', 'docx', 'odt'];
 
+// returns a type based on the file extension
 var getType = function (filename) {
     var ext = filename.split('.').pop();
 
@@ -110,6 +115,7 @@ var getType = function (filename) {
     }
 };
 
+// these are the flags that get sent with the listing
 var flags = {
     del: config.del,
     upl: config.upload,
@@ -117,16 +123,19 @@ var flags = {
     rnm: config.rename
 };
 
+// creates an md5 hash of the input filenames
 var hashFilenames = function (files) {
     var copy = files.slice(0);
     copy.sort();
     return crypto.createHash('md5').update(copy.join('')).digest('hex');
 };
 
+// returns the filepath of the input file (for Array#map() operations)
 var filepathMapper = function (file) {
     return file.path || '';
 };
 
+// counts the number of items in a directory
 var countItems = function (dir) {
     try {
         return fs.readdirSync(dir).length;
@@ -135,6 +144,7 @@ var countItems = function (dir) {
     }
 };
 
+// normalizes relative path by removing leading slash
 var normalizeRelPath = function (p) {
     if (p.charAt(0) == '/') {
         p = p.substring(1);
@@ -142,8 +152,10 @@ var normalizeRelPath = function (p) {
     return p;
 };
 
+// the main listing function
 var getListing = function (rpath, res) {
-    if (!rpath) {
+    if (rpath === undefined) {
+        console.error('Listing path is malformed');
         res.sendStatus(400);
         return;
     }
@@ -152,6 +164,7 @@ var getListing = function (rpath, res) {
     fs.readdir(dir, 'utf8', function (err, files) {
         if (err) {
             res.sendStatus(400);
+            console.error(err);
         } else {
             var listing = [];
             files.forEach(function (f) {
@@ -178,20 +191,34 @@ var getListing = function (rpath, res) {
     });
 };
 
+// Performs a mv (rename or move)
 var doMove = function (oldPath, newPath, isDir, res) {
-    if (!oldPath || !newPath) {
+    if (oldPath === undefined || newPath === undefined) {
+        console.error('Malformed paths');
         res.sendStatus(400);
         return;
     }
-    oldPath = normalizeRelPath(oldPath);
-    newPath = normalizeRelPath(newPath);
+    var orig = oldPath;
+    oldPath = path.join(config.root, normalizeRelPath(oldPath));
+    newPath = path.join(config.root, normalizeRelPath(newPath));
 
-    // TODO
-    res.sendStatus(400);
+    fs.rename(oldPath, newPath, function (err) {
+        if (err) {
+            console.error(err);
+            res.sendStatus(500);
+            return;
+        }
+        var curr = orig.split('/').slice(0, -1).join('/');
+        getListing(curr, res);
+    });
 };
 
+/**
+ * The temporary file registry.
+ * Every 2 minutes, it checks the expiration time of each entry, and removes it from disk if it has expired.
+ * @type {Array}
+ */
 var tmpRegistry = [];
-
 setTimeout(function () {
     var now = Date.now();
     tmpRegistry.forEach(function (entry, ix, arr) {
@@ -199,6 +226,7 @@ setTimeout(function () {
             // delete
             fs.remove(entry.file, function (err) {
                 if (err) console.error('Could not remove the file: ', err);
+                console.log('Removing ' + entry.file + ' from the disk/registry');
                 arr.splice(ix, 1); // remove from registry
             });
         }
@@ -206,6 +234,9 @@ setTimeout(function () {
 }, 1000 * 60 * 2);
 
 /**
+ * The listing endpoint.
+ *
+ * Expects the body to be:
  * {
  *   requestPath: '/path/to/folder'
  * }
@@ -216,6 +247,9 @@ app.get('/listing', function (req, res) {
 });
 
 /**
+ * The download endpoint.
+ *
+ * Expects the body to be:
  * {
  *   files: [
  *     {
@@ -270,8 +304,9 @@ app.post('/download', function (req, res) {
 });
 
 /**
- * Note: only active when delete is enabled
+ * The delete endpoint. Responds with a 403 if not enabled
  *
+ * Expects the body to be:
  * {
  *   current: 'path',
  *   files: ['file1', 'file2', ...]
@@ -301,6 +336,9 @@ app.post('/delete', function (req, res) {
 });
 
 /**
+ * The rename endpoint. Responds with a 403 if not enabled
+ *
+ * Expects the body to be:
  * {
  *   currentPath: 'path',
  *   newPath: 'path',
@@ -308,10 +346,17 @@ app.post('/delete', function (req, res) {
  * }
  */
 app.post('/rename', function (req, res) {
-    doMove(req.body.currentPath, req.body.newPath, req.body.directory, res);
+    if (config.rename) {
+        doMove(req.body.currentPath, req.body.newPath, req.body.directory, res);
+    } else {
+        res.sendStatus(403);
+    }
 });
 
 /**
+ * The endpoint for creating a new folder.
+ *
+ * Expects the body to be:
  * {
  *   current: 'path',
  *   folderName: 'name'
@@ -345,13 +390,47 @@ app.post('/newfolder', function (req, res) {
     });
 });
 
+/**
+ * Expects form data
+ *
+ * TODO: check for existing filename
+ */
+app.post('/upload', upload.single('file'), function (req, res) {
+    if (!config.upload) {
+        res.sendStatus(403);
+        return;
+    }
+    var outpath = path.join(config.root, req.body.path, req.file.originalname);
+    var out = fs.createWriteStream(outpath);
+    out.on('open', function () {
+        out.write(req.file.buffer);
+        out.end();
+    });
+    out.on('close', function () {
+        getListing(req.body.path, res);
+    });
+    out.on('error', function (err) {
+        console.error(err);
+        res.sendStatus(500);
+    });
+});
+
 try {
+    // ensure the directory exists
     fs.ensureDirSync(config.tmp);
+    // empty it if it contains anything
     fs.emptyDirSync(config.tmp);
 } catch (e) {
-    console.error('Could not create tmp directory: ', e);
+    console.error('Could not create/clean tmp directory: ', e);
     process.exit(1);
 }
 
 // start up server
-app.listen(config.port);
+app.listen(config.port, function () {
+    console.log('Server is running with the following config:');
+    console.log('   -Deletions are ....... ' + ((config.del) ? 'ENABLED' : 'DISABLED'));
+    console.log('   -Uploads are ......... ' + ((config.upload) ? 'ENABLED' : 'DISABLED'));
+    console.log('   -Folder creation is .. ' + ((config.newfolder) ? 'ENABLED' : 'DISABLED'));
+    console.log('   -Renaming is ......... ' + ((config.rename) ? 'ENABLED' : 'DISABLED'));
+    console.log('   -Hidden files are .... ' + ((config.hidden) ? 'ENABLED' : 'DISABLED'));
+});

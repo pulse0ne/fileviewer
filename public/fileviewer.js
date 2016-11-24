@@ -11,6 +11,124 @@ _app.config(['$mdThemingProvider', 'cfpLoadingBarProvider', function (themingPro
     loadingBar.includeSpinner = false;
 }]);
 
+_app.factory('sorting', function () {
+    var self = this;
+
+    // stable merge sort to compensate for chrome
+    self.sort = function (arr, compareFn) {
+        if (arr == null) {
+            return [];
+        } else if (arr.length < 2) {
+            return arr;
+        }
+
+        if (compareFn == null) {
+            compareFn = defaultCompare;
+        }
+
+        var mid, left, right;
+
+        mid   = ~~(arr.length / 2);
+        left  = self.sort( arr.slice(0, mid), compareFn );
+        right = self.sort( arr.slice(mid, arr.length), compareFn );
+
+        return merge(left, right, compareFn);
+    };
+
+    var defaultCompare = function (a, b) {
+        return a < b ? -1 : (a > b? 1 : 0);
+    };
+
+    var merge = function (left, right, compareFn) {
+        var result = [];
+
+        while (left.length && right.length) {
+            if (compareFn(left[0], right[0]) <= 0) {
+                // if 0 it should preserve same order (stable)
+                result.push(left.shift());
+            } else {
+                result.push(right.shift());
+            }
+        }
+
+        if (left.length) {
+            result.push.apply(result, left);
+        }
+
+        if (right.length) {
+            result.push.apply(result, right);
+        }
+
+        return result;
+    };
+
+    self.lex = new (function () {
+        var _sort = function (a, b, descend) {
+            // prioritize directories, then sort on name
+            if (a.directory ^ b.directory) {
+                return a.directory ? -1 : 1;
+            } else {
+                return descend ? a.name.toLowerCase() > b.name.toLowerCase() : a.name.toLowerCase() < b.name.toLowerCase();
+            }
+        };
+
+        this.descend = function (a, b) { return _sort(a, b, true) };
+        this.ascend = function (a, b) { return _sort(a, b, false) };
+        return this;
+    })();
+
+    self.size = new (function () {
+        var _sort = function (a, b, descend) {
+            // prioritize directories, then sort on size
+            if (a.directory ^ b.directory) {
+                return a.directory ? -1 : 1;
+            } else {
+                return descend ? a.size > b.size : a.size < b.size;
+            }
+        };
+
+        this.descend = function (a, b) { return _sort(a, b, true) };
+        this.ascend = function (a, b) { return _sort(a, b, false) };
+        return this;
+    })();
+
+    self.mod = new (function () {
+        var _sort = function (a, b, descend) {
+            // prioritize directories, then sort on modified
+            if (a.directory ^ b.directory) {
+                return a.directory ? -1 : 1;
+            } else {
+                return descend ? a.modified > b.modified : a.modified < b.modified;
+            }
+        };
+
+        this.descend = function (a, b) { return _sort(a, b, true) };
+        this.ascend = function (a, b) { return _sort(a, b, false) };
+        return this;
+    })();
+
+    self.get = function (sort) {
+        if (!sort || sort.constructor !== String) {
+            return self.lex.descend;
+        }
+        var s = sort.split('.');
+        if (s.length != 2) {
+            return self.lex.descend;
+        }
+        var first = this[s[0]];
+        if (!first) {
+            return self.lex.descend;
+        }
+        var second = first[s[1]];
+        if (!second) {
+            return self.lex.descend;
+        }
+        return second;
+    };
+
+    return self;
+});
+
 _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
     var self = this;
 
@@ -19,12 +137,7 @@ _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
             hideDelay: 5000,
             position: 'top right',
             controller: function ($scope) { $scope.msg = msg },
-            template:
-            '<md-toast class="notification">' +
-            '  <span class="md-toast-text" flex>' +
-            '    <span class="error buffer-right fa fa-times fa16"></span>{{msg}}' +
-            '  </span>' +
-            '</md-toast>'
+            templateUrl: 'templates/error.tmpl.html'
         });
     };
 
@@ -60,8 +173,11 @@ _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
         $http.post('/rename', obj).then(function success(response) {
             callback(response.data);
         }, function error(response) {
-            // TODO: improve
-            showErrorToast('Error: ' + response.status);
+            if (response.status == 403) {
+                showErrorToast('Renaming is not enabled on the server');
+            } else {
+                showErrorToast('Could not rename the item');
+            }
         });
     };
 
@@ -69,9 +185,27 @@ _app.service('$httpService', ['$http', '$mdToast', function ($http, $mdToast) {
         $http.post('/newfolder', obj).then(function success(response) {
             callback(response.data);
         }, function error(response) {
-            // TODO: improve
-            showErrorToast('Error: ' + response.status);
+            if (response.status == 403) {
+                showErrorToast('New folder creation is not enabled on the server');
+            } else {
+                showErrorToast('Could not create a new folder');
+            }
         });
+    };
+
+    self.upload = function (obj, callback) {
+        $http.post('/upload', obj, {
+            transformRequest: angular.identity,
+            headers: { 'Content-Type': undefined }
+        }).then(function success(response) {
+            callback(response.data);
+        }, function error(response) {
+            if (response.status == 403) {
+                showErrorToast('Uploads are not enabled on the server');
+            } else {
+                showErrorToast('Could not upload file');
+            }
+        })
     };
 }]);
 
@@ -80,137 +214,21 @@ _app.controller('fileviewerController', [
     '$mdToast',
     '$mdDialog',
     '$httpService',
-    function ($scope, $mdToast, $mdDialog, http) {
+    'sorting',
+    function ($scope, $mdToast, $mdDialog, http, sorting) {
         $scope.currentPath = [];
         $scope.listing = [];
         $scope.selectedItems = [];
         $scope.currSort = ['lex', 'descend'];
         $scope.flags = {};
 
-        var sorting = new (function () {
-            var self = this;
-
-            // stable merge sort to compensate for chrome
-            self.sort = function (arr, compareFn) {
-                if (arr == null) {
-                    return [];
-                } else if (arr.length < 2) {
-                    return arr;
-                }
-
-                if (compareFn == null) {
-                    compareFn = defaultCompare;
-                }
-
-                var mid, left, right;
-
-                mid   = ~~(arr.length / 2);
-                left  = self.sort( arr.slice(0, mid), compareFn );
-                right = self.sort( arr.slice(mid, arr.length), compareFn );
-
-                return merge(left, right, compareFn);
-            };
-
-            var defaultCompare = function (a, b) {
-                return a < b ? -1 : (a > b? 1 : 0);
-            };
-
-            var merge = function (left, right, compareFn) {
-                var result = [];
-
-                while (left.length && right.length) {
-                    if (compareFn(left[0], right[0]) <= 0) {
-                        // if 0 it should preserve same order (stable)
-                        result.push(left.shift());
-                    } else {
-                        result.push(right.shift());
-                    }
-                }
-
-                if (left.length) {
-                    result.push.apply(result, left);
-                }
-
-                if (right.length) {
-                    result.push.apply(result, right);
-                }
-
-                return result;
-            };
-
-            self.lex = new (function () {
-                var _sort = function (a, b, descend) {
-                    // prioritize directories, then sort on name
-                    if (a.directory ^ b.directory) {
-                        return a.directory ? -1 : 1;
-                    } else {
-                        return descend ? a.name.toLowerCase() > b.name.toLowerCase() : a.name.toLowerCase() < b.name.toLowerCase();
-                    }
-                };
-
-                this.descend = function (a, b) { return _sort(a, b, true) };
-                this.ascend = function (a, b) { return _sort(a, b, false) };
-                return this;
-            })();
-
-            self.size = new (function () {
-                var _sort = function (a, b, descend) {
-                    // prioritize directories, then sort on size
-                    if (a.directory ^ b.directory) {
-                        return a.directory ? -1 : 1;
-                    } else {
-                        return descend ? a.size > b.size : a.size < b.size;
-                    }
-                };
-
-                this.descend = function (a, b) { return _sort(a, b, true) };
-                this.ascend = function (a, b) { return _sort(a, b, false) };
-                return this;
-            })();
-
-            self.mod = new (function () {
-                var _sort = function (a, b, descend) {
-                    // prioritize directories, then sort on modified
-                    if (a.directory ^ b.directory) {
-                        return a.directory ? -1 : 1;
-                    } else {
-                        return descend ? a.modified > b.modified : a.modified < b.modified;
-                    }
-                };
-
-                this.descend = function (a, b) { return _sort(a, b, true) };
-                this.ascend = function (a, b) { return _sort(a, b, false) };
-                return this;
-            })();
-
-            self.get = function (sort) {
-                if (!sort || sort.constructor !== String) {
-                    return self.lex.descend;
-                }
-                var s = sort.split('.');
-                if (s.length != 2) {
-                    return self.lex.descend;
-                }
-                var first = this[s[0]];
-                if (!first) {
-                    return self.lex.descend;
-                }
-                var second = first[s[1]];
-                if (!second) {
-                    return self.lex.descend;
-                }
-                return second;
-            };
-
-            return self;
-        })();
-
         var currentSort = sorting.get('lex.descend');
 
         var listingCb = function (data) {
             $scope.listing = sorting.sort(data.listing, currentSort);
             if (data.current !== '') {
-                $scope.currentPath = data.current.split('/');
+                var curr = data.current.endsWith('/') ? data.current.slice(0, data.current.length - 1) : data.current;
+                $scope.currentPath = curr.split('/');
             } else {
                 $scope.currentPath = [];
             }
@@ -238,12 +256,7 @@ _app.controller('fileviewerController', [
                     $scope.link = link;
                     $scope.close = $mdToast.hide;
                 },
-                template:
-                    '<md-toast class="notification">' +
-                    '  <span class="md-toast-text" flex>Download ready:</span>' +
-                    '  <a class="md-primary md-button" href="{{link}}" target="_blank" ng-click="close()">Download</a>' +
-                    '  <a class="md-button md-warn" href="" ng-click="close()">Cancel</a>' +
-                    '</md-toast>'
+                templateUrl: 'templates/download.tmpl.html'
             });
         };
 
@@ -271,6 +284,23 @@ _app.controller('fileviewerController', [
             $mdDialog.show(newfolder).then(function confirm(result) {
                 var newf = result || 'New Folder';
                 http.newfolder({ current: basepath, folderName: newf }, cb);
+            });
+        };
+
+        var showUploadDialog = function (currentPath, cb) {
+            $mdDialog.show({
+                controller: function ($scope) {
+                    $scope.upload = function () {
+                        var file = $scope.ufile;
+                        var fd = new FormData();
+                        fd.append('file', file);
+                        fd.append('path', currentPath);
+                        http.upload(fd, cb);
+                        $mdDialog.hide();
+                    };
+                    $scope.cancel = $mdDialog.hide;
+                },
+                templateUrl: 'templates/upload.tmpl.html'
             });
         };
 
@@ -330,7 +360,8 @@ _app.controller('fileviewerController', [
             var files = $scope.selectedItems.map(filePathMapper);
             var current = $scope.currentPath.join('/');
             var n = files.length;
-            showDeleteConfirmationDialog('Are you sure you want to delete ' + n + ' item' + (n > 1) ? 's?' : '?', function () {
+            var msg = 'Are you sure you want to delete ' + n + ' item' + ((n > 1) ? 's?' : '?');
+            showDeleteConfirmationDialog(msg, function () {
                 http.deleteFiles(files, current, listingCb);
             });
         };
@@ -344,7 +375,7 @@ _app.controller('fileviewerController', [
         };
 
         $scope.uploadClicked = function () {
-            // TODO
+            showUploadDialog($scope.currentPath.join('/'), listingCb);
         };
 
         $scope.changeSort = function (stype) {
@@ -361,6 +392,22 @@ _app.controller('fileviewerController', [
 
     }
 ]);
+
+_app.directive('fileUpload', ['$parse', function ($parse) {
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr) {
+            var model = $parse(attr.fileUpload);
+            var modelSetter = model.assign;
+
+            element.bind('change', function () {
+                scope.$apply(function () {
+                    modelSetter(scope, element[0].files[0]);
+                });
+            });
+        }
+    };
+}]);
 
 _app.filter('humanSize', function () {
     return function (b, d) {

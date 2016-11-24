@@ -6,7 +6,8 @@
         "argparse": "latest",
         "body-parser": "latest",
         "express": "latest",
-        "fs-extra": "latest"
+        "fs-extra": "latest",
+        "multer": "latest"
     },
     "repository": {},
     "license": "MIT"

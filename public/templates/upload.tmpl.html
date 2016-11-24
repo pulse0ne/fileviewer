@@ -1,0 +1,9 @@
+<md-dialog md-theme="default" class="_md md-default-theme md-transition-in" role="dialog">
+    <md-dialog-content class="md-dialog-content" role="document">
+        <input type="file" file-upload="ufile">
+    </md-dialog-content>
+    <md-dialog-actions>
+        <md-button class="md-primary md-cancel-button" ng-click="cancel()">Cancel</md-button>
+        <md-button class="md-primary md-confirm-button" ng-disabled="!ufile" ng-click="upload()">Upload</md-button>
+    </md-dialog-actions>
+</md-dialog>
