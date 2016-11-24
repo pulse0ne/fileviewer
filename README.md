@@ -1,5 +1,5 @@
 # Fileviewer
-Little utility to view/download/delete files.
+A highly configurable client/server utility to remotely manage files. Includes a mobile-responsive front-end based on AngularJS.
 
 ![fileviewer](https://github.com/pulse0ne/fileviewer/blob/master/fileviewer.png?raw=true)
 
@@ -8,15 +8,15 @@ Little utility to view/download/delete files.
 node server.js -r /home/user/stuff
 ```
 
+#### All options (short-form)
+```bash
+node server.js -r /home/user/stuff -p 1776 -e 120 -t ./abc -d -u -n -m -s
+```
+
 ### Advanced Usage
 #### All options (long-form)
 ```bash
 node server.js --root /home/user/stuff --port 1776 --expiry 120 --tmp ./abc --delete --upload --newfolder --rename --showhidden
-```
-
-#### All options (short-form)
-```bash
-node server.js -r /home/user/stuff -p 1776 -e 120 -t ./abc -d -u -n -m -s
 ```
 
 ### Arguments
@@ -36,6 +36,7 @@ node server.js -r /home/user/stuff -p 1776 -e 120 -t ./abc -d -u -n -m -s
 
 ### TODOs
 - Add logging
+- Update screenshot
 - Hide icon buttons when disabled?
 - Add move capability?
 
