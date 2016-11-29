@@ -37,7 +37,6 @@ node server.js --root /home/user/stuff --port 1776 --expiry 120 --tmp ./abc --de
 ### TODOs
 - Add logging
 - Update screenshot
-- Hide icon buttons when disabled?
 - Add move capability?
 
 ### Notes
@@ -58,6 +57,6 @@ Thanks to the wonderful people behind these projects:
 - [expressjs](https://github.com/expressjs) for [express](https://github.com/expressjs/express), [body-parser](https://github.com/expressjs/body-parser) and [multer](https://github.com/expressjs/multer)
 - [angular](https://github.com/angular) for [angular.js](https://github.com/angular/angular.js) and [Angular Material](https://github.com/angular/material)
 - [chieffancypants](https://github.com/chieffancypants) for [angular-loading-bar](https://github.com/chieffancypants/angular-loading-bar)
-- [mout](https://github.com/mout) for the stable [merge-sort](https://github.com/mout/mout/master/src/array/sort.js) implementation
+- [mout](https://github.com/mout) for the stable [merge-sort](https://github.com/mout/mout/blob/master/src/array/sort.js) implementation
 - The Fontawesome Team for [fontawesome](http://fontawesome.io/)
 - [StackOverflow](http://stackoverflow.com/) for answering my stupid questions
