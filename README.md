@@ -38,6 +38,7 @@ node server.js --root /home/user/stuff --port 1776 --expiry 120 --tmp ./abc --de
 - Add logging
 - Update screenshot
 - Add move capability?
+- Add ```--all``` option, and maybe ```--none``` too
 
 ### Notes
 - The temporary directory used for storing the zipped files will be emptied of its contents on each startup, so don't keep anything you want to keep around in there! The reason we do this is because the zipped files that get created there may stick around if the server process exits before the file 'expires' and is removed from the disk.
